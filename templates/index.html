@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breast Cancer Detection</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #eef2f7, #dbeafe);
+    text-align: center;
+    margin: 0;
+    padding: 0 0 30px;
+}
+
+h1 {
+    margin-top: 30px;
+}
+
+.upload-box {
+    width: 90%;
+    height: 220px;
+    max-width: 600px;
+    margin: auto;
+    padding: 30px;
+    border: 2px dashed #2563eb;
+    border-radius: 15px;
+    background: #f8fbff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.upload-box:hover {
+    background: #eef4ff;
+}
+
+.upload-box.dragging {
+    background: #dbeafe;
+    border-color: #1d4ed8;
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 50px;
+}
+
+.predict-btn {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: #40a464;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.1s ease;
+}
+
+.predict-btn:hover {
+    background: #227942;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.preview img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    margin: 5px;
+    border-radius: 8px;
+    transition: transform 0.2s;
+}
+
+.preview img:hover {
+    transform: scale(1.1);
+}
+
+.results {
+    margin-top: 40px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin: 10px;
+    width: 260px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: left;
+    transition: 0.2s;
+}
+
+.card img {
+    width: 40%;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.filename {
+    font-size: 12px;
+    word-wrap: break-word;
+    margin-bottom: 8px;
+}
+
+.benign { color: green; font-weight: bold; }
+.malignant { color: red; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h1>🧬 Breast Cancer Detection System</h1>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="upload-box" id="uploadBox">
+        <div class="upload-icon">☁️</div>
+        <p>Drag & Drop or Click to Upload</p>
+        <input type="file" name="files" multiple id="fileInput" accept="image/*" hidden required>
+        <div class="preview" id="preview"></div>
+    </div>
+
+    <button type="submit" class="predict-btn">Predict</button>
+</form>
+
+<div class="results">
+{% for file, actual, predicted, conf in results %}
+    <div class="card">
+        <img src="{{ url_for('static', filename='uploads/' + file) }}" alt="{{ file }}">
+        <div class="filename">{{ file }}</div>
+
+        <div>
+            Actual:
+            {% if actual == "Malignant" %}
+                <span class="malignant">Malignant</span>
+            {% else %}
+                <span class="benign">Benign</span>
+            {% endif %}
+        </div>
+
+        <div>
+            Predicted:
+            {% if predicted == "Malignant" %}
+                <span class="malignant">Malignant</span>
+            {% else %}
+                <span class="benign">Benign</span>
+            {% endif %}
+        </div>
+
+        {% if actual == predicted %}
+            <div class="benign">✅ Correct</div>
+        {% else %}
+            <div class="malignant">❌ Wrong</div>
+        {% endif %}
+
+        <div>Confidence: {{ conf }}</div>
+    </div>
+{% endfor %}
+</div>
+
+<hr>
+
+<script>
+const uploadBox = document.getElementById("uploadBox");
+const fileInput = document.getElementById("fileInput");
+const preview = document.getElementById("preview");
+
+uploadBox.addEventListener("click", () => fileInput.click());
+
+uploadBox.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadBox.classList.add("dragging");
+});
+
+uploadBox.addEventListener("dragleave", () => {
+    uploadBox.classList.remove("dragging");
+});
+
+uploadBox.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadBox.classList.remove("dragging");
+    fileInput.files = e.dataTransfer.files;
+    showPreview(fileInput.files);
+});
+
+fileInput.addEventListener("change", (e) => {
+    showPreview(e.target.files);
+});
+
+function showPreview(files) {
+    preview.innerHTML = "";
+    for (let file of files) {
+        if (!file.type.startsWith("image/")) continue;
+        let img = document.createElement("img");
+        img.src = URL.createObjectURL(file);
+        preview.appendChild(img);
+    }
+}
+</script>
+
+</body>
+</html>
